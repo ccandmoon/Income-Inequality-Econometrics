@@ -1,0 +1,194 @@
+------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  D:\PhotonUser\My Files\Google Drive\My Drive\github\initial_analysis.log
+  log type:  text
+ opened on:   2 Jun 2026, 15:03:20
+
+. use "cps.dta", clear
+
+. drop wkswork1
+
+. 
+. replace incwage = . if incwage == 0 | incwage == 99999999
+(82,105 real changes made, 82,105 to missing)
+
+. replace age = . if age < 14
+(710,111 real changes made, 710,111 to missing)
+
+. replace uhrsworkly = . if uhrsworkly == 999
+(77,727 real changes made, 77,727 to missing)
+
+. gen white = (race == 100)
+
+. replace white = 0 if race != 100
+(0 real changes made)
+
+. 
+. *******************************************************
+. * Descriptive Analysis 
+. *******************************************************
+. sum age
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         age |  3,817,426    48.07866    19.81095         14         85
+
+. sum sex
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         sex |  4,527,537    1.511915    .4998581          1          2
+
+. sum white
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+       white |  4,527,537    .7947816    .4038612          0          1
+
+. sum uhrsworkly
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+  uhrsworkly |     80,232    38.60349    11.57143          1         99
+
+. sum incwage
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     incwage |     75,854    57947.62    75436.61          2    1999999
+
+. 
+. *******************************************************
+. * Income Distribution Analysis
+. *******************************************************
+. summarize incwage, detail
+
+                   wage and salary income
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%          700              2
+ 5%         3500              2
+10%         8400              2       Obs              75,854
+25%        22000              2       Sum of wgt.      75,854
+
+50%        41600                      Mean           57947.62
+                        Largest       Std. dev.      75436.61
+75%        70000        1160000
+90%       115000        1199999       Variance       5.69e+09
+95%       150000        1269999       Skewness       7.217131
+99%       314544        1999999       Kurtosis       85.92589
+
+. histogram incwage if incwage > 0 & incwage < 1000000 , percent normal bin(70)
+(bin=70, start=2, width=14142.829)
+
+. graph export "hist_dependent.jpg", replace
+file hist_dependent.jpg written in JPEG format
+
+. 
+. *mean of the dummy explanatory variables
+. bysort sex: summarize incwage
+
+------------------------------------------------------------------------------------------------------
+-> sex = male
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     incwage |     38,898     68178.7    84056.81          2    1269999
+
+------------------------------------------------------------------------------------------------------
+-> sex = female
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     incwage |     36,956     47178.9    63384.33          2    1999999
+
+
+. bysort white: summarize incwage
+
+------------------------------------------------------------------------------------------------------
+-> white = 0
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     incwage |     16,571       54778    72695.83          5    1099999
+
+------------------------------------------------------------------------------------------------------
+-> white = 1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     incwage |     59,283     58833.6     76162.1          2    1999999
+
+
+. 
+. *correlations with numerical variables
+. corr incwage age
+(obs=75,854)
+
+             |  incwage      age
+-------------+------------------
+     incwage |   1.0000
+         age |   0.1460   1.0000
+
+
+. corr incwage uhrsworkly
+(obs=75,854)
+
+             |  incwage uhrswo~y
+-------------+------------------
+     incwage |   1.0000
+  uhrsworkly |   0.2994   1.0000
+
+
+. 
+. *generate a new dummy variable
+. summarize incwage if incwage > 0 & incwage < ., detail
+
+                   wage and salary income
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%          700              2
+ 5%         3500              2
+10%         8400              2       Obs              75,854
+25%        22000              2       Sum of wgt.      75,854
+
+50%        41600                      Mean           57947.62
+                        Largest       Std. dev.      75436.61
+75%        70000        1160000
+90%       115000        1199999       Variance       5.69e+09
+95%       150000        1269999       Skewness       7.217131
+99%       314544        1999999       Kurtosis       85.92589
+
+. gen high_income = (incwage > r(p50)) if incwage > 0 & incwage < .
+(4,451,683 missing values generated)
+
+. 
+. *conditional and marginal probabilities table
+. tab high_income white, col
+
++-------------------+
+| Key               |
+|-------------------|
+|     frequency     |
+| column percentage |
++-------------------+
+
+high_incom |         white
+         e |         0          1 |     Total
+-----------+----------------------+----------
+         0 |     8,921     29,053 |    37,974 
+           |     53.84      49.01 |     50.06 
+-----------+----------------------+----------
+         1 |     7,650     30,230 |    37,880 
+           |     46.16      50.99 |     49.94 
+-----------+----------------------+----------
+     Total |    16,571     59,283 |    75,854 
+           |    100.00     100.00 |    100.00 
+
+. 
+. log close
+      name:  <unnamed>
+       log:  D:\PhotonUser\My Files\Google Drive\My Drive\github\initial_analysis.log
+  log type:  text
+ closed on:   2 Jun 2026, 15:03:45
+------------------------------------------------------------------------------------------------------
