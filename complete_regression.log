@@ -1,0 +1,217 @@
+------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  D:\PhotonUser\My Files\Google Drive\My Drive\github\complete_regression.log
+  log type:  text
+ opened on:   2 Jun 2026, 15:03:48
+
+. 
+. *******************************************************
+. * 1. Load and Clean Data
+. *******************************************************
+. 
+. use "cps.dta", clear
+
+. 
+. * Remove unnecessary variable
+. drop wkswork1
+
+. 
+. * Handle invalid or missing values
+. replace incwage = . if incwage == 0 | incwage == 99999999
+(82,105 real changes made, 82,105 to missing)
+
+. replace age = . if age < 14
+(710,111 real changes made, 710,111 to missing)
+
+. replace uhrsworkly = . if uhrsworkly == 999
+(77,727 real changes made, 77,727 to missing)
+
+. 
+. * Create race indicator variable
+. gen white = (race == 100)
+
+. 
+. * Label variables for readability
+. label variable incwage "Annual Wage Income"
+
+. label variable age "Age"
+
+. label variable sex "Sex"
+
+. label variable uhrsworkly "Usual Weekly Hours Worked"
+
+. label variable white "White Race Indicator"
+
+. 
+. *******************************************************
+. * 2. Descriptive Statistics
+. *******************************************************
+. 
+. * Summary statistics of key variables
+. summarize incwage age sex uhrsworkly white
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+     incwage |     75,854    57947.62    75436.61          2    1999999
+         age |  3,817,426    48.07866    19.81095         14         85
+         sex |  4,527,537    1.511915    .4998581          1          2
+  uhrsworkly |     80,232    38.60349    11.57143          1         99
+       white |  4,527,537    .7947816    .4038612          0          1
+
+. 
+. * Detailed distribution of wage income
+. summarize incwage, detail
+
+                     Annual Wage Income
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%          700              2
+ 5%         3500              2
+10%         8400              2       Obs              75,854
+25%        22000              2       Sum of wgt.      75,854
+
+50%        41600                      Mean           57947.62
+                        Largest       Std. dev.      75436.61
+75%        70000        1160000
+90%       115000        1199999       Variance       5.69e+09
+95%       150000        1269999       Skewness       7.217131
+99%       314544        1999999       Kurtosis       85.92589
+
+. 
+. *******************************************************
+. * 3. Distribution Analysis
+. *******************************************************
+. 
+. * Visualize wage income distribution
+. histogram incwage if incwage > 0 & incwage < 1000000, ///
+> percent normal bin(70) ///
+> title("Distribution of Wage Income")
+(bin=70, start=2, width=14142.829)
+
+. 
+. graph export "income_distribution_histogram.jpg", replace
+file income_distribution_histogram.jpg written in JPEG format
+
+. 
+. *******************************************************
+. * 4. Exploratory Relationship Analysis
+. *******************************************************
+. 
+. * Relationship between age and wage income
+. scatter incwage age, ///
+> title("Wage Income vs Age")
+
+. 
+. graph export "income_age_scatter.jpg", replace
+file income_age_scatter.jpg written in JPEG format
+
+. 
+. * Relationship between work hours and wage income
+. scatter incwage uhrsworkly, ///
+> title("Wage Income vs Weekly Hours Worked")
+
+. 
+. graph export "income_hours_scatter.jpg", replace
+(file income_hours_scatter.jpg not found)
+file income_hours_scatter.jpg written in JPEG format
+
+. 
+. *******************************************************
+. * 5. Correlation Analysis
+. *******************************************************
+. 
+. * Examine linear relationships
+. corr incwage age
+(obs=75,854)
+
+             |  incwage      age
+-------------+------------------
+     incwage |   1.0000
+         age |   0.1460   1.0000
+
+
+. corr incwage uhrsworkly
+(obs=75,854)
+
+             |  incwage uhrswo~y
+-------------+------------------
+     incwage |   1.0000
+  uhrsworkly |   0.2994   1.0000
+
+
+. 
+. *******************************************************
+. * 6. Group Comparison Analysis
+. *******************************************************
+. 
+. * Compare mean wages by sex
+. table sex, statistic(mean incwage)
+
+--------------------
+         |      Mean
+---------+----------
+Sex      |          
+  male   |   68178.7
+  female |   47178.9
+  Total  |  57947.62
+--------------------
+
+. 
+. * Hypothesis test:
+. * Are average wages significantly different by sex?
+. ttest incwage, by(sex)
+
+Two-sample t test with equal variances
+------------------------------------------------------------------------------
+   Group |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+    male |  38,898     68178.7    426.1959    84056.81    67343.35    69014.06
+  female |  36,956     47178.9    329.7155    63384.33    46532.64    47825.15
+---------+--------------------------------------------------------------------
+Combined |  75,854    57947.62    273.9005    75436.61    57410.77    58484.46
+---------+--------------------------------------------------------------------
+    diff |            20999.81    542.6536                19936.21    22063.41
+------------------------------------------------------------------------------
+    diff = mean(male) - mean(female)                              t =  38.6984
+H0: diff = 0                                     Degrees of freedom =    75852
+
+    Ha: diff < 0                 Ha: diff != 0                 Ha: diff > 0
+ Pr(T < t) = 1.0000         Pr(|T| > |t|) = 0.0000          Pr(T > t) = 0.0000
+
+. 
+. *******************************************************
+. * 7. Regression Analysis
+. *******************************************************
+. 
+. * Multivariate regression model
+. * Controls for age, weekly hours, race, and sex
+. reg incwage age uhrsworkly white sex, robust
+
+Linear regression                               Number of obs     =     75,854
+                                                F(4, 75849)       =    1839.88
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.1097
+                                                Root MSE          =      71180
+
+------------------------------------------------------------------------------
+             |               Robust
+     incwage | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         age |   584.0604    15.4027    37.92   0.000     553.8711    614.2496
+  uhrsworkly |   1799.107   25.96669    69.29   0.000     1748.212    1850.001
+       white |   2690.966   614.9903     4.38   0.000     1485.588    3896.344
+         sex |  -13242.79   517.4312   -25.59   0.000    -14256.96   -12228.63
+       _cons |   -18897.4   1446.329   -13.07   0.000     -21732.2    -16062.6
+------------------------------------------------------------------------------
+
+. 
+. *******************************************************
+. * End of Analysis
+. *******************************************************
+. 
+. log close
+      name:  <unnamed>
+       log:  D:\PhotonUser\My Files\Google Drive\My Drive\github\complete_regression.log
+  log type:  text
+ closed on:   2 Jun 2026, 15:04:38
+------------------------------------------------------------------------------------------------------
